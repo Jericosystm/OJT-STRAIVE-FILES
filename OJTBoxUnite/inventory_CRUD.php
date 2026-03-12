@@ -28,8 +28,7 @@ $location = $data['location'] ?? 'WFH';
 // Logic: If WFH, force department and cubicle to be empty
 $department = ($location === 'Onsite') ? ($data['department'] ?? '') : '';
 // Note: Changed variable name to match schema 'cubicle_no'
-$cubicle_no = ($location === 'Onsite') ? ($data['cubicle_number'] ?? '') : '';
-
+$cubicle_no = ($location === 'Onsite') ? ($data['cubicle_no'] ?? '') : '';
 $response = ["success" => false];
 
 try {

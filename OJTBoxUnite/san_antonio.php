@@ -15,23 +15,23 @@ if(isset($_POST['swap_seats'])) {
     $targetId = $_POST['target_id'];
 
     // Fetch source data
-    $stmt = $conn->prepare("SELECT host_name, status, campaign FROM all_assets_master WHERE id = ?");
+    $stmt = $conn->prepare("SELECT hostname, status, campaign FROM production_floor_map WHERE id = ?");
     $stmt->bind_param("i", $sourceId);
     $stmt->execute();
     $sourceData = $stmt->get_result()->fetch_assoc();
 
     // Fetch target data
-    $stmt = $conn->prepare("SELECT host_name, status, campaign FROM all_assets_master WHERE id = ?");
+    $stmt = $conn->prepare("SELECT hostname, status, campaign FROM production_floor_map WHERE id = ?");
     $stmt->bind_param("i", $targetId);
     $stmt->execute();
     $targetData = $stmt->get_result()->fetch_assoc();
 
     // Swap data (Updating hostname, status, and campaign/switch_port)
-    $updateSource = $conn->prepare("UPDATE all_assets_master SET host_name=?, status=?, campaign=? WHERE id=?");
-    $updateSource->bind_param("sssi", $targetData['host_name'], $targetData['status'], $targetData['campaign'], $sourceId);
+    $updateSource = $conn->prepare("UPDATE production_floor_map SET hostname=?, status=?, campaign=? WHERE id=?");
+    $updateSource->bind_param("sssi", $targetData['hostname'], $targetData['status'], $targetData['campaign'], $sourceId);
     
-    $updateTarget = $conn->prepare("UPDATE all_assets_master SET host_name=?, status=?, campaign=? WHERE id=?");
-    $updateTarget->bind_param("sssi", $sourceData['host_name'], $sourceData['status'], $sourceData['campaign'], $targetId);
+    $updateTarget = $conn->prepare("UPDATE production_floor_map SET hostname=?, status=?, campaign=? WHERE id=?");
+    $updateTarget->bind_param("sssi", $sourceData['hostname'], $sourceData['status'], $sourceData['campaign'], $targetId);
 
     if($updateSource->execute() && $updateTarget->execute()) {
         echo json_encode(['success' => true]);
@@ -41,16 +41,16 @@ if(isset($_POST['swap_seats'])) {
 
 if(isset($_POST['update_seat'])) {
     $id = $_POST['id'];
-    $host_name = $_POST['host_name'];
+    $hostname = $_POST['hostname'];
     $switch_port = $_POST['switch_port'] ?? ''; 
     $status = $_POST['status']; 
 
     if($status === 'Vacant') {
-        $host_name = '';
+        $hostname = '';
     }
 
-    $stmt = $conn->prepare("UPDATE all_assets_master SET host_name=?, status=?, campaign=? WHERE id=?");
-    $stmt->bind_param("sssi", $host_name, $status, $switch_port, $id);
+    $stmt = $conn->prepare("UPDATE production_floor_map SET hostname=?, status=?, campaign=? WHERE id=?");
+    $stmt->bind_param("sssi", $hostname, $status, $switch_port, $id);
     
     if($stmt->execute()) {
         header("Location: san_antonio.php");
@@ -62,16 +62,14 @@ $stations = [];
 $occupied_count = 0;
 $vacant_count = 0;
 
-// Change the query to pull from all_assets_master
-$stmt = $conn->prepare("SELECT * FROM all_assets_master WHERE department = ? AND location = 'Onsite' ORDER BY cubicle_no ASC");
+$stmt = $conn->prepare("SELECT * FROM production_floor_map WHERE department = ? ORDER BY id ASC LIMIT 49");
 $stmt->bind_param("s", $department_name);
 $stmt->execute();
 $result = $stmt->get_result();
 
 while($row = $result->fetch_assoc()) {
-    // We use cubicle_no as the key to place them correctly on the grid
-    $stations[$row['cubicle_no']] = $row; 
-    if($row['status'] === 'Active') $occupied_count++;
+    $stations[] = $row;
+    if($row['status'] === 'Occupied') $occupied_count++;
     else $vacant_count++;
 }
 $vacant_count += (49 - count($stations));
@@ -103,7 +101,6 @@ $vacant_count += (49 - count($stations));
         }
 
         html, body { 
-            
             height: 100vh; margin: 0; padding: 0;
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background: var(--bg); color: var(--text-dark); overflow: hidden; 
@@ -265,7 +262,12 @@ $vacant_count += (49 - count($stations));
 </head>
 <body id="body">
 
-
+<nav class="navbar">
+    <a href="prod_map.php" class="nav-back-btn" title="Back to Overview">
+        <i class="fa-solid fa-circle-arrow-left"></i>
+    </a>
+    <div style="color: white; font-weight: 900; font-size: 1.4rem; letter-spacing: -0.02em;">OJTBox | San Antonio Dashboard</div>
+</nav>
 
 <div class="edit-sidebar">
     <div style="font-weight: 800; font-size: 0.9rem; color: var(--text-dark);">Swap Mode</div>
@@ -294,32 +296,35 @@ $vacant_count += (49 - count($stations));
 
     <div class="map-grid-container">
         <div class="map-grid" id="mapGrid">
-    <?php 
-    // Inside san_antonio.php
-for($i = 1; $i <= 49; $i++): 
-    // This generates ATL0001, ATL0002...
-    $cubicle_id = "ATL" . str_pad($i, 4, '0', STR_PAD_LEFT); 
-    
-    // This looks in the 'all_assets_master' table for a row where cubicle_no = 'ATL0001'
-    $data = $stations[$cubicle_id] ?? null; 
-    
-    // If found, it pulls the hostname automatically
-    $host_name = $data ? $data['host_name'] : 'VACANT';
-?>
-    ?>
-        <div class="seat-box <?php echo $status; ?>" 
-             onclick='openEdit(<?php echo json_encode($data ?: ["cubicle_no" => $cubicle_id, "status" => "Vacant"]); ?>)'>
-            
-            <i class="fa-solid fa-desktop"></i>
-            <strong><?php echo $cubicle_id; ?></strong>
-            <span class="host-text"><?php echo htmlspecialchars($hostname); ?></span>
-            
-            <?php if($data): ?>
-                <div class="port-badge">Port: <?php echo htmlspecialchars($data['switch_port']); ?></div>
-            <?php endif; ?>
-        </div>
-    <?php endfor; ?>
-</div>
+            <?php 
+            for($i = 0; $i < 49; $i++): 
+                $row = $stations[$i] ?? null;
+                $id = $row['id'] ?? ($i + 1);
+                $cubicle_num = $i + 1;
+                $cubicle_name = "SAS-" . str_pad($cubicle_num, 4, '0', STR_PAD_LEFT);
+                $status = $row['status'] ?? 'Vacant';
+                $hostname = $row['hostname'] ?? '';
+                $switch_port = $row['campaign'] ?? 'Not Set';
+                
+                $tooltip = "Cubicle: $cubicle_name\nStatus: $status\nHostname: " . ($hostname ?: 'None') . "\nPort: $switch_port";
+            ?>
+                <div class="seat-box <?php echo $status; ?>" 
+                     id="seat-<?php echo $id; ?>"
+                     data-id="<?php echo $id; ?>"
+                     data-hostname="<?php echo strtolower($hostname); ?>"
+                     title="<?php echo $tooltip; ?>"
+                     onclick="handleSeatClick(event, '<?php echo $id; ?>', '<?php echo $cubicle_name; ?>', '<?php echo $hostname; ?>', '<?php echo $switch_port; ?>', '<?php echo $status; ?>')">
+                    <strong style="font-size: 0.85rem; display:block;"><?php echo $cubicle_name; ?></strong>
+                    <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600;"><?php echo $switch_port; ?></div>
+                    <div style="font-size: 0.75rem; font-weight: 700; margin-top:4px;"><?php echo $hostname ?: 'Available'; ?></div>
+                </div>
+
+                <?php 
+                if ($cubicle_num % 14 == 0 && $cubicle_num < 49) {
+                    echo '<div class="walkway"></div>';
+                }
+                ?>
+            <?php endfor; ?>
         </div>
     </div>
 
@@ -350,14 +355,14 @@ for($i = 1; $i <= 49; $i++):
             <input type="text" name="switch_port" id="seatSwitch" style="width:100%; padding:0.8rem; margin:0.5rem 0 1rem; border-radius:12px; border:1px solid var(--border);">
 
             <label style="font-weight:700; font-size:0.75rem; text-transform:uppercase; color:var(--text-muted);">Current Status</label>
-            <select name="status" id="seatStatus" onchange="toggleHost_name()" style="width:100%; padding:0.8rem; margin:0.5rem 0 1rem; border-radius:12px; border:1px solid var(--border);">
+            <select name="status" id="seatStatus" onchange="toggleHostname()" style="width:100%; padding:0.8rem; margin:0.5rem 0 1rem; border-radius:12px; border:1px solid var(--border);">
                 <option value="Occupied">Occupied (Online)</option>
                 <option value="Vacant">Vacant (Available)</option>
             </select>
 
             <div id="hostnameWrapper">
                 <label style="font-weight:700; font-size:0.75rem; text-transform:uppercase; color:var(--text-muted);">Hostname</label>
-                <input type="text" name="host_name" id="seatHost" style="width:100%; padding:0.8rem; margin:0.5rem 0 1rem; border-radius:12px; border:1px solid var(--border);">
+                <input type="text" name="hostname" id="seatHost" style="width:100%; padding:0.8rem; margin:0.5rem 0 1rem; border-radius:12px; border:1px solid var(--border);">
             </div>
 
             <div style="display: flex; gap: 15px; margin-top: 1rem;">
@@ -475,10 +480,10 @@ for($i = 1; $i <= 49; $i++):
         document.getElementById('seatSwitch').value = sw === 'Not Set' ? '' : sw;
         document.getElementById('seatStatus').value = status;
         document.getElementById('modalHeader').innerText = "Manage " + cubicle;
-        toggleHost_name();
+        toggleHostname();
     }
 
-    function toggleHost_name() {
+    function toggleHostname() {
         const status = document.getElementById('seatStatus').value;
         const hostInput = document.getElementById('seatHost');
         if(status === 'Vacant') {
@@ -497,7 +502,7 @@ for($i = 1; $i <= 49; $i++):
         let input = document.getElementById('searchInput').value.toLowerCase();
         let seats = document.getElementsByClassName('seat-box');
         for (let i = 0; i < seats.length; i++) {
-            let host = seats[i].getAttribute('data-host_name');
+            let host = seats[i].getAttribute('data-hostname');
             if (host.includes(input)) {
                 seats[i].classList.remove('dimmed');
             } else {

@@ -62,8 +62,7 @@ if ($target_status === 'All') {
 
 if (!empty($search_query)) {
 
-$sql = "SELECT $cols FROM all_assets_master WHERE (`asset_name` LIKE ? OR `host_name` LIKE ? OR `serial_num` LIKE ? OR `cubicle_number` LIKE ?) ORDER BY updated_at DESC";
-
+$sql = "SELECT $cols FROM all_assets_master WHERE (`asset_name` LIKE ? OR `host_name` LIKE ? OR `serial_num` LIKE ? OR `cubicle_no` LIKE ?) ORDER BY updated_at DESC";
 $like_param = "%$search_query%";
 
 $params = [$like_param, $like_param, $like_param, $like_param];

@@ -252,8 +252,8 @@ function renderRoom($name, $data, $extraClass = "") {
             <input type="hidden" name="department" id="seatDept">
             <label style="font-size: 0.8rem; font-weight: bold;">Hostname</label>
             <input type="text" name="host_name" id="seatHost" style="width:100%; padding:10px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd;">
-            <label style="font-size: 0.8rem; font-weight: bold;">Campaign Notes</label>
-            <textarea name="campaign" id="seatCamp" style="width:100%; height:80px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; resize: none;"></textarea>
+            <label style="font-size: 0.8rem; font-weight: bold;">switch_port Notes</label>
+            <textarea name="switch_port" id="seatCamp" style="width:100%; height:80px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; resize: none;"></textarea>
             <button type="submit" name="update_seat" style="width:100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; cursor: pointer;">SAVE CHANGES</button>
             <button type="button" onclick="closeModal()" style="width:100%; background: none; border: none; margin-top: 10px; color: #64748b; cursor: pointer;">Discard Changes</button>
         </form>
@@ -267,7 +267,7 @@ function renderRoom($name, $data, $extraClass = "") {
         document.getElementById('seatTitle').innerText = "Station: " + data.cubicle_no;
         document.getElementById('seatDept').value = data.department;
         document.getElementById('seatHost').value = data.host_name || '';
-        document.getElementById('seatCamp').value = data.campaign || '';
+        document.getElementById('seatCamp').value = data.switch_port || '';
     }
     function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
     function searchMap() {
