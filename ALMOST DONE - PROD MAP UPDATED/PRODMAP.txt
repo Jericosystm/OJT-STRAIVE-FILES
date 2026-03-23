@@ -1,0 +1,145 @@
+PRODMAP
+
+PORT ALL LOCK
+<div id="modalOverlay" class="modal-overlay">
+    <div class="modal-content">
+        <h2 id="modalHeader" style="margin:0 0 1.5rem; font-weight:800;">Station Details</h2>
+        
+        <form>
+            <input type="hidden" id="seatId">
+            
+            <label style="font-size:0.7rem; font-weight:700; display:block; margin-bottom:5px;">CUBICLE</label>
+            <input type="text" id="seatCubicle" readonly style="width:100%; padding:0.7rem; margin-bottom:1rem; border-radius:10px; border:1px solid var(--border); background:#f8fafc; box-sizing: border-box;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <label style="font-size:0.7rem; font-weight:700; color: var(--text-muted);">PORT</label>
+                <i class="fa-solid fa-lock" style="font-size: 0.6rem; color: var(--text-muted);"></i>
+            </div>
+            <input type="text" id="seatSwitch" readonly style="width:100%; padding:0.7rem; margin-bottom:1rem; border-radius:10px; border:1px solid var(--border); background:#f8fafc; color: var(--text-muted); box-sizing: border-box;">
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <label style="font-size:0.7rem; font-weight:700; color: var(--text-muted);">STATUS</label>
+                <i class="fa-solid fa-lock" style="font-size: 0.6rem; color: var(--text-muted);"></i>
+            </div>
+            <select id="seatStatus" readonly style="width:100%; padding:0.7rem; margin-bottom:1rem; border-radius:10px; border:1px solid var(--border); background:#f8fafc; pointer-events: none; color: var(--text-muted); box-sizing: border-box;">
+                <option value="Occupied">Occupied</option>
+                <option value="Vacant">Vacant</option>
+            </select>
+
+            <div id="hostnameWrapper">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <label style="font-size:0.7rem; font-weight:700; color: var(--text-muted);">HOSTNAME</label>
+                    <i class="fa-solid fa-lock" style="font-size: 0.6rem; color: var(--text-muted);"></i>
+                </div>
+                <input type="text" id="seatHost" readonly style="width:100%; padding:0.7rem; margin-bottom:1.5rem; border-radius:10px; border:1px solid var(--border); background:#f8fafc; color: var(--text-muted); box-sizing: border-box;">
+            </div>
+
+            <div style="padding-top: 10px;">
+                <button type="button" onclick="closeModal()" 
+                        style="width: 100%; padding: 0.8rem; background: var(--primary); color:white; border:none; border-radius:10px; font-weight:700; cursor:pointer;">
+                    CLOSE
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+LOCK:
+
+<label style="font-size:0.7rem; font-weight:700;">STATUS</label>
+<select name="status" id="seatStatus" readonly style="width:100%; padding:0.7rem; margin-bottom:1rem; border-radius:10px; border:1px solid var(--border); background:#f8fafc; pointer-events: none;">
+    <option value="Occupied">Occupied</option>
+    <option value="Vacant">Vacant</option>
+</select>
+
+<div id="hostnameWrapper">
+    <label style="font-size:0.7rem; font-weight:700;">HOSTNAME</label>
+    <input type="text" name="hostname" id="seatHost" readonly style="width:100%; padding:0.7rem; margin-bottom:1.5rem; border-radius:10px; border:1px solid var(--border); background:#f8fafc;">
+</div>
+
+
+UPDATE:
+
+if(isset($_POST['update_seat'])) {
+    $id = $_POST['id'];
+    $switch_port = $_POST['switch_port'] ?? 'Not Set'; 
+
+    // We no longer update hostname or status here to prevent manual overrides
+    $stmt = $conn->prepare("UPDATE production_floor_map SET switch_port=? WHERE id=?");
+    $stmt->bind_param("si", $switch_port, $id);
+    
+    if($stmt->execute()) {
+        header("Location: training_room.php");
+        exit();
+    }
+}
+
+
+SWAP:
+if(isset($_POST['swap_seats'])) {
+    $sourceId = $_POST['source_id'];
+    $targetId = $_POST['target_id'];
+
+    $conn->begin_transaction();
+
+    try {
+        // 1. Fetch current data for both seats
+        $stmt = $conn->prepare("SELECT hostname, status, cubicle_no FROM production_floor_map WHERE id = ?");
+        $stmt->bind_param("i", $sourceId);
+        $stmt->execute();
+        $sourceMap = $stmt->get_result()->fetch_assoc();
+
+        $stmt->bind_param("i", $targetId);
+        $stmt->execute();
+        $targetMap = $stmt->get_result()->fetch_assoc();
+
+        $srcHost = $sourceMap['hostname'];
+        $tgtHost = $targetMap['hostname'];
+        $srcCubicle = $sourceMap['cubicle_no'];
+        $tgtCubicle = $targetMap['cubicle_no'];
+
+        // 2. SWAP ON FLOOR MAP
+        $updateMap = $conn->prepare("UPDATE production_floor_map SET hostname=?, status=? WHERE id=?");
+        // Move Target info to Source ID
+        $updateMap->bind_param("ssi", $tgtHost, $targetMap['status'], $sourceId);
+        $updateMap->execute();
+        // Move Source info to Target ID
+        $updateMap->bind_param("ssi", $srcHost, $sourceMap['status'], $targetId);
+        $updateMap->execute();
+
+        // 3. SWAP IN INVENTORY (The Fixed Sync)
+        // We use a unique temporary hostname to break the duplication link
+        $tempHostSuffix = "_SWAP_" . time();
+
+        if (!empty($srcHost)) {
+            // Step A: Move Source to Target's Cubicle but give it a TEMP Hostname
+            $tmpName = $srcHost . $tempHostSuffix;
+            $upd1 = $conn->prepare("UPDATE inventory_items SET cubicle_number = ?, hostname = ? WHERE hostname = ?");
+            $upd1->bind_param("sss", $tgtCubicle, $tmpName, $srcHost);
+            $upd1->execute();
+        }
+
+        if (!empty($tgtHost)) {
+            // Step B: Move Target to Source's Cubicle (Safe now because Source changed its hostname)
+            $upd2 = $conn->prepare("UPDATE inventory_items SET cubicle_number = ? WHERE hostname = ?");
+            $upd2->bind_param("ss", $srcCubicle, $tgtHost);
+            $upd2->execute();
+        }
+
+        if (!empty($srcHost)) {
+            // Step C: Restore Source's original hostname
+            $tmpName = $srcHost . $tempHostSuffix;
+            $upd3 = $conn->prepare("UPDATE inventory_items SET hostname = ? WHERE hostname = ?");
+            $upd3->bind_param("ss", $srcHost, $tmpName);
+            $upd3->execute();
+        }
+
+        $conn->commit();
+        echo json_encode(['success' => true]);
+
+    } catch (Exception $e) {
+        $conn->rollback();
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+    exit();
+}
