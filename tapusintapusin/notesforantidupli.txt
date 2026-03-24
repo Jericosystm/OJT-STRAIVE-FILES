@@ -1,0 +1,39 @@
+ALTER TABLE inventory_items ADD UNIQUE (hostname);
+ALTER TABLE inventory_items ADD UNIQUE (asset_name);
+ALTER TABLE inventory_items ADD UNIQUE (serial_num);
+
+// --- ANTI-DUPLICATION CHECK ---
+    if ($action === 'create' || $action === 'update') {
+        // Query to check if any record has the same Hostname, Asset Name, or Serial Number
+        $checkSql = "SELECT hostname, asset_name, serial_num FROM inventory_items 
+                     WHERE (hostname = ? OR asset_name = ? OR serial_num = ?)";
+        
+        // If updating, we ignore the record we are currently editing
+        if ($action === 'update') {
+            $checkSql .= " AND id != ?";
+        }
+        
+        $checkStmt = $conn->prepare($checkSql);
+        
+        if ($action === 'update') {
+            $checkStmt->bind_param("sssi", $hostname, $asset_name, $serial_num, $id);
+        } else {
+            $checkStmt->bind_param("sss", $hostname, $asset_name, $serial_num);
+        }
+        
+        $checkStmt->execute();
+        $dupResult = $checkStmt->get_result();
+        
+        if ($dupRow = $dupResult->fetch_assoc()) {
+            if ($dupRow['hostname'] === $hostname) {
+                throw new Exception("The hostname '$hostname' is already assigned to another asset.");
+            }
+            if ($dupRow['asset_name'] === $asset_name) {
+                throw new Exception("The asset name '$asset_name' already exists in the system.");
+            }
+            if ($dupRow['serial_num'] === $serial_num) {
+                throw new Exception("Serial Number '$serial_num' is already registered.");
+            }
+        }
+    }
+    // --- END ANTI-DUPLICATION CHECK ---
