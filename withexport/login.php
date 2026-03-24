@@ -19,12 +19,13 @@ if (isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        body {
-            background: #000;
-            margin: 0;
-            font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            overflow: hidden;
+        body { 
+            background: #000; 
+            margin: 0; 
+            font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            overflow: hidden; 
             color: white;
+            perspective: 1000px;
         }
 
         #lines-canvas-container {
@@ -62,7 +63,7 @@ if (isset($_SESSION['user_id'])) {
         .logo-track {
             display: flex;
             width: max-content;
-            gap: 100px;
+            gap: 100px; 
             animation: scroll 30s linear infinite;
             align-items: center;
         }
@@ -82,7 +83,7 @@ if (isset($_SESSION['user_id'])) {
         }
 
         .logo-img {
-            height: 45px;
+            height: 45px; 
             width: auto;
             max-width: 150px;
             object-fit: contain;
@@ -108,7 +109,7 @@ if (isset($_SESSION['user_id'])) {
         .button-group {
             display: flex;
             justify-content: center;
-            gap: 40px;
+            gap: 40px; 
         }
 
         .btn { padding: 15px 35px; border-radius: 50px; font-weight: 600; cursor: pointer; transition: 0.3s; text-decoration: none; font-size: 1rem; border: none; }
@@ -117,7 +118,7 @@ if (isset($_SESSION['user_id'])) {
         .btn-outline { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(5px); }
 
         #login-section {
-            display: none;
+            display: none; 
             opacity: 0;
             transform: scale(0.95) translateY(20px);
             transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -142,32 +143,55 @@ if (isset($_SESSION['user_id'])) {
 
         @keyframes rotate-shine { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        .login-card {
-            position: relative; z-index: 2; background: rgba(15, 15, 15, 0.85);
-            backdrop-filter: blur(15px); padding: 30px 40px; border-radius: 19px; width: 380px; text-align: center;
+        .login-card { 
+            position: relative; z-index: 2; background: rgba(15, 15, 15, 0.85); 
+            backdrop-filter: blur(15px); padding: 30px 40px; border-radius: 19px; width: 380px; text-align: center; 
         }
 
-        /* MODIFIED LOGO CSS */
-        .logo { 
-            margin-bottom: 20px; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center;
-            min-height: 100px;
-        }
+        .logo { font-size: 2.2rem; font-weight: 800; color: #ff6600; margin-bottom: 5px; }
         
-        .logo img {
-            max-width: 300px;
+        /* UPDATED LOGO CONTAINER - BIGGER & 3D HOVER */
+        .parallax-wrapper {
+            width: 100%;
             height: auto;
-            filter: drop-shadow(0 0 8px rgba(255, 102, 0, 0.3));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 5px;
+            perspective: 1000px;
+        }
+
+        .logo-static-img {
+            width: 250px; /* Increased size */
+            height: auto;
+            filter: drop-shadow(0 0 20px rgba(255, 102, 0, 0.4));
+            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), filter 0.3s ease;
+            cursor: pointer;
+            transform-style: preserve-3d;
+        }
+
+        .logo-label {
+            margin-top: -30px;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #ff6600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(255, 102, 0, 0.5);
+        }
+
+        /* 3D Hover Effect */
+        .parallax-wrapper:hover .logo-static-img {
+            filter: drop-shadow(0 0 35px rgba(255, 102, 0, 0.7));
         }
 
         .input-group { position: relative; margin-bottom: 25px; text-align: left; }
         .input-group i.main-icon { position: absolute; left: 15px; top: 15px; color: #ff6600; z-index: 5; }
         
-        .input-group input {
-            width: 100%; padding: 15px 15px 15px 45px; border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(255,255,255,0.05); border-radius: 12px; outline: none; box-sizing: border-box;
+        .input-group input { 
+            width: 100%; padding: 15px 15px 15px 45px; border: 1px solid rgba(255,255,255,0.1); 
+            background: rgba(255,255,255,0.05); border-radius: 12px; outline: none; box-sizing: border-box; 
             color: #fff; font-size: 1rem; transition: all 0.4s;
         }
 
@@ -177,7 +201,7 @@ if (isset($_SESSION['user_id'])) {
         }
 
         .input-group input:focus ~ label,
-        .input-group input:valid ~ label {
+        .input-group input:not(:placeholder-shown) ~ label {
             top: -22px; left: 10px; font-size: 0.8rem; color: #ff6600; font-weight: 600;
         }
 
@@ -193,15 +217,16 @@ if (isset($_SESSION['user_id'])) {
         }
         .toggle-password:hover { color: #ff6600; }
 
+        /* CAPS LOCK WARNING STYLE */
         #caps-warning {
             position: absolute; right: 45px; top: 15px; color: #ffae00;
             font-size: 0.8rem; display: none; pointer-events: none;
         }
 
-        .login-btn {
+        .login-btn { 
             position: relative; overflow: hidden;
-            width: 100%; padding: 14px; background: #ff6600; color: white; border: none;
-            border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s;
+            width: 100%; padding: 14px; background: #ff6600; color: white; border: none; 
+            border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; 
         }
 
         .login-btn::before {
@@ -216,6 +241,7 @@ if (isset($_SESSION['user_id'])) {
 
         .fade-out { opacity: 0; transform: translateY(-30px); pointer-events: none; }
 
+        /* SweetAlert Custom Dark Theme */
         .swal2-popup {
             background: rgba(20, 20, 20, 0.95) !important;
             backdrop-filter: blur(10px);
@@ -224,6 +250,7 @@ if (isset($_SESSION['user_id'])) {
             border-radius: 20px !important;
         }
 
+        /* LEARN MORE MODAL STYLES - UPDATED FOR WORLD CLASS LOOK */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
@@ -234,8 +261,8 @@ if (isset($_SESSION['user_id'])) {
             pointer-events: none;
         }
         .modal-card {
-            background: rgba(18, 18, 18, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(18, 18, 18, 0.8); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
             border-radius: 24px;
             padding: 40px; width: 90%; max-width: 650px; text-align: center;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
@@ -246,27 +273,27 @@ if (isset($_SESSION['user_id'])) {
             transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         
-        .modal-overlay.active {
-            opacity: 1;
+        .modal-overlay.active { 
+            opacity: 1; 
             visibility: visible;
             pointer-events: auto;
         }
-        .modal-overlay.active .modal-card {
-            transform: scale(1) translateY(0);
+        .modal-overlay.active .modal-card { 
+            transform: scale(1) translateY(0); 
         }
 
         .dev-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; text-align: left;
         }
-        .dev-item {
+        .dev-item { 
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.05);
             padding: 12px 16px;
             border-radius: 12px;
-            color: rgba(255,255,255,0.9);
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
+            color: rgba(255,255,255,0.9); 
+            font-size: 0.95rem; 
+            display: flex; 
+            align-items: center; 
             gap: 12px;
             transition: 0.3s;
         }
@@ -278,9 +305,9 @@ if (isset($_SESSION['user_id'])) {
         .dev-item i { color: #ff6600; font-size: 0.8rem; opacity: 0.8; }
         
         .close-modal-btn {
-            margin-top: 35px; width: 100%;
-            background: #fff; color: #000;
-            padding: 14px; border-radius: 12px;
+            margin-top: 35px; width: 100%; 
+            background: #fff; color: #000; 
+            padding: 14px; border-radius: 12px; 
             font-weight: 700; border: none; cursor: pointer;
             transition: 0.3s;
         }
@@ -305,13 +332,27 @@ if (isset($_SESSION['user_id'])) {
     <div id="learn-more-modal" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="about-ojtbox">
-                <div class="logo"><img src="logo.png" alt="OJTBox Logo"></div>
+                <div class="logo" style="font-size: 1.5rem; margin-bottom: 10px;"><i class="fa-solid fa-box-open"></i> OJTBox</div>
                 <h3>Revolutionizing Asset Management</h3>
-                <p>OJTBox was engineered to bridge the gap between complex organizational logistics and seamless digital tracking.</p>
+                <p>OJTBox was engineered to bridge the gap between complex organizational logistics and seamless digital tracking. It serves as a centralized hub for managing hardware, software, and personnel documentation with absolute precision.</p>
                 <ul class="feature-list">
                     <li><i class="fa-solid fa-check"></i> Real-time Inventory Tracking</li>
                     <li><i class="fa-solid fa-check"></i> Automated Documentation</li>
+                    <li><i class="fa-solid fa-check"></i> Secure User Authentication</li>
+                    <li><i class="fa-solid fa-check"></i> Fluid EUC Administration</li>
                 </ul>
+            </div>
+
+            <h4 style="color: #fff; font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; text-align: left;">Mga maangas</h4>
+            <p style="color: rgba(255,255,255,0.5); font-size: 0.9rem; line-height: 1.5; text-align: left;">The architects dedicated to the innovation and maintenance of OJTBox.</p>
+            <div class="dev-grid">
+                <div class="dev-item"><i class="fa-solid fa-code"></i> Ken Daniel Llamanzares</div>
+                <div class="dev-item"><i class="fa-solid fa-code"></i> Bentley Sabas III</div>
+                <div class="dev-item"><i class="fa-solid fa-code"></i> Renyl Medina</div>
+                <div class="dev-item"><i class="fa-solid fa-code"></i> Jerico Amata</div>
+                <div class="dev-item"><i class="fa-solid fa-code"></i> Gavter Dausen</div>
+                <div class="dev-item"><i class="fa-solid fa-code"></i> Jay-ar Bartolata</div>
+                <div class="dev-item" style="grid-column: span 2;"><i class="fa-solid fa-code"></i> Ian Buisan</div>
             </div>
             <button class="close-modal-btn" onclick="toggleModal(false)">Dismiss</button>
         </div>
@@ -331,8 +372,9 @@ if (isset($_SESSION['user_id'])) {
             <div class="shine-container <?php echo (isset($_GET['error'])) ? 'error-shake' : ''; ?>">
                 <div class="shine-border"></div>
                 <div class="login-card">
-                    <div class="logo">
-                        <img src="logo.png" alt="OJTBox Logo">
+                    <div class="parallax-wrapper" id="parallax-trigger">
+                        <img src="logo.png" alt="OJTBox Logo" class="logo-static-img" id="parallax-logo">
+                        <div class="logo-label">OJT BOX</div>
                     </div>
                     <span class="subtitle" style="color: #ccc; font-size: 0.9rem; margin-bottom: 30px; display: block;">Asset Management System</span>
                     
@@ -341,13 +383,13 @@ if (isset($_SESSION['user_id'])) {
                         
                         <div class="input-group">
                             <i class="fa-solid fa-user main-icon"></i>
-                            <input type="text" name="username" id="username" required autocomplete="off">
+                            <input type="text" name="username" id="username" required autocomplete="off" placeholder=" ">
                             <label for="username">Username</label>
                         </div>
                         
                         <div class="input-group">
                             <i class="fa-solid fa-lock main-icon"></i>
-                            <input type="password" name="password" id="password" required onkeyup="checkCaps(event)">
+                            <input type="password" name="password" id="password" required onkeyup="checkCaps(event)" placeholder=" ">
                             <label for="password">Password</label>
                             <span id="caps-warning"><i class="fa-solid fa-arrow-up-z-a"></i> Caps ON</span>
                             <i class="fa-solid fa-eye toggle-password" id="eye-icon" onclick="togglePass()"></i>
@@ -393,10 +435,10 @@ if (isset($_SESSION['user_id'])) {
                 vec2 mouseUv = (2.0 * iMouse - iResolution.xy) / iResolution.y;
                 mouseUv.y *= -1.0;
                 vec3 col = vec3(0.0);
-                vec3 ORANGE = vec3(1.0, 0.4, 0.0);
+                vec3 ORANGE = vec3(1.0, 0.4, 0.0); 
                 for (int i = 0; i < 3; ++i) {
                     float fi = float(i);
-                    float opacity = 0.8 - (fi * 0.25);
+                    float opacity = 0.8 - (fi * 0.25); 
                     vec2 ruv = baseUv * rotate(0.15 * log(length(baseUv) + 1.2) + fi * 0.1);
                     col += ORANGE * wave(ruv + vec2(fi * 0.5, 0.0), 3.0 + fi * 1.5, baseUv, mouseUv, true) * opacity;
                 }
@@ -432,6 +474,30 @@ if (isset($_SESSION['user_id'])) {
     </script>
 
     <script>
+        // UPDATED 3D PARALLAX EFFECT - ONLY ACTIVE ON ELEMENT HOVER
+        const parallaxTrigger = document.getElementById('parallax-trigger');
+        const logo = document.getElementById('parallax-logo');
+
+        parallaxTrigger.addEventListener('mousemove', (e) => {
+            if(!logo) return;
+            
+            const rect = logo.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            // Calculate tilt based on mouse position relative to logo center
+            const tiltX = (centerY - e.clientY) / 8;
+            const tiltY = (e.clientX - centerX) / 8;
+            
+            // Apply 3D rotation and slight translation
+            logo.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.1) translateZ(20px)`;
+        });
+
+        // Reset logo position when mouse leaves the specific wrapper
+        parallaxTrigger.addEventListener('mouseleave', () => {
+            if(logo) logo.style.transform = `rotateX(0deg) rotateY(0deg) scale(1)`;
+        });
+
         // PARTNERS CONFIG
         const partners = [
             { name: "Straive", url: "https://www.straive.com/", img: "https://www.straive.com/wp-content/uploads/2024/12/Website-Logo-HD-1-172x48.png" },
@@ -448,7 +514,7 @@ if (isset($_SESSION['user_id'])) {
                     <img src="${p.img}" alt="${p.name}" class="logo-img">
                 </a>
             `).join('');
-            track.innerHTML = logoHTML + logoHTML;
+            track.innerHTML = logoHTML + logoHTML; 
         }
 
         function showLogin() {
@@ -458,7 +524,7 @@ if (isset($_SESSION['user_id'])) {
             setTimeout(() => {
                 landing.style.display = 'none';
                 login.style.display = 'block';
-                login.offsetHeight;
+                login.offsetHeight; 
                 login.classList.add('show-login');
             }, 400);
         }
@@ -475,6 +541,9 @@ if (isset($_SESSION['user_id'])) {
             }
         }
 
+        // --- NEW WORLD CLASS FEATURES ---
+
+        // 1. Caps Lock Detection
         function checkCaps(event) {
             const capsWarning = document.getElementById('caps-warning');
             if (event.getModifierState("CapsLock")) {
@@ -484,21 +553,26 @@ if (isset($_SESSION['user_id'])) {
             }
         }
 
+        // 2. Advanced Login Submission with SweetAlert
         function handleLoginSubmit(form) {
             const btn = document.getElementById('submit-btn');
             const btnText = document.getElementById('btn-text');
+            
             btn.disabled = true;
             btnText.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Authenticating...';
-            return true;
+            
+            // Note: PHP error handling via SweetAlert
+            return true; 
         }
 
+        // 3. Error Alert (If PHP sends error param)
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('error')) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Access Denied',
-                    text: 'Invalid username or password.',
+                    text: 'Invalid username or password. Please try again.',
                     confirmButtonColor: '#ff6600',
                     toast: true,
                     position: 'top-end',
@@ -508,10 +582,14 @@ if (isset($_SESSION['user_id'])) {
             }
         });
 
+        // 4. Modal Controls
         function toggleModal(show) {
             const modal = document.getElementById('learn-more-modal');
-            if (show) modal.classList.add('active');
-            else modal.classList.remove('active');
+            if (show) {
+                modal.classList.add('active');
+            } else {
+                modal.classList.remove('active');
+            }
         }
 
         function closeModal(event) {
