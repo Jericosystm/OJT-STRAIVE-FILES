@@ -1,0 +1,139 @@
+/* style.css - Peter Tarka Minimalist 3D Theme (REFINED) */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;800&display=swap');
+
+:root {
+    --accent: #a78bfa; 
+    --accent-glow: rgba(167, 139, 250, 0.4); /* Ginawang mas intense */
+    --glass: rgba(255, 255, 255, 0.05); /* Tinaasan ng konti ang visibility */
+    --border: rgba(255, 255, 255, 0.12); /* Mas visible na border */
+    --bg: #080808; /* Slightly lighter black para makita ang depth */
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { 
+    background: var(--accent); 
+    border-radius: 10px;
+}
+
+body {
+    background-color: var(--bg);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #ffffff;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* Studio Floor Glow - Mas pinaliwanag para hindi "malabo" */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* 3D Blueprint Grid */
+body::after {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.text-gradient {
+    background: linear-gradient(180deg, #FFFFFF 30%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* --- PROJECT CARD FIX --- */
+.project-card {
+    background: var(--glass);
+    /* Binawasan ang blur mula 25px papuntang 12px para luminaw ang details */
+    backdrop-filter: blur(12px); 
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 32px; 
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-style: preserve-3d;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Nilagyan ng "Inner Light" effect para magmukhang 3D */
+.project-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+    pointer-events: none;
+}
+
+.project-card:hover {
+    border-color: var(--accent);
+    /* Mas malinis na glow effect */
+    box-shadow: 
+        0 20px 40px rgba(0,0,0,0.4), 
+        0 0 20px var(--accent-glow),
+        inset 0 0 15px rgba(167, 139, 250, 0.1);
+    transform: translateY(-10px) scale(1.02);
+}
+
+#custom-cursor {
+    width: 20px;
+    height: 20px;
+    background: white;
+    mix-blend-mode: difference;
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s ease-out;
+}
+
+/* Terminal & UI Elements */
+#terminal-window {
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid var(--accent); /* Nilagyan ng accent color border */
+    border-radius: 16px;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+#terminal-input {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    padding: 10px 15px;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+#terminal-input:focus {
+    border-color: var(--accent);
+}
+/* REFINED CLARITY - Clean & Visible */
+.project-card {
+    background: rgba(20, 20, 20, 0.9) !important; /* Solid dark background para litaw ang text */
+    backdrop-filter: blur(10px) !important; 
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.project-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.9); /* Para hindi sobrang silaw */
+}
